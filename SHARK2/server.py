@@ -10,7 +10,6 @@ functions, otherwise it will be hard for TAs to grade your code. However, you ca
 
 '''
 
-# imports used
 from flask import Flask, request
 from flask import render_template
 import time
@@ -80,23 +79,29 @@ def generate_sample_points(points_X, points_Y):
     return sample_points_X, sample_points_Y
 
 
+# function to normalize points
+def normalize(sample_points_X, sample_points_Y, L=50):
+    width = max(sample_points_X) - min(sample_points_X)
+    height = max(sample_points_Y) - min(sample_points_Y)
+    if width == 0 and height == 0:
+        s = 0
+    else:
+        s = L / max(width, height)
+    return list(s * elem for elem in sample_points_X), list(s * elem for elem in sample_points_Y)
+
+
 # Pre-sample every template
 template_sample_points_X, template_sample_points_Y = [], []
 for i in range(10000):
     X, Y = generate_sample_points(template_points_X[i], template_points_Y[i])
+    X, Y = normalize(X, Y)
     template_sample_points_X.append(X)
     template_sample_points_Y.append(Y)
 
-# normalize templates before pruning
-# declare (arbitrary) pre-determined length L
-L = 100
-# subtract min of all elems in X/Y along axis=1 from max of all elems in X/Y along axis=1 to get width/height
-width = np.amax(template_sample_points_X, axis=1) - np.amin(template_sample_points_X, axis=1)
-height = np.amax(template_sample_points_Y, axis=1) - np.amin(template_sample_points_Y, axis=1)
-# get max of width and height along axis=0 to determine s = L/max(W, H)
-width_height = np.amax(np.array([width, height]), axis=0)
-s = L / np.maximum(1, width_height)
-# scale largest side
+
+# helper function to calculate distance between two points
+def distance(x1, y1, x2, y2):
+    return (((x2 - x1) ** 2) + ((y2 - y1) ** 2)) ** 0.5
 
 
 def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, template_sample_points_Y):
@@ -124,9 +129,19 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
     '''
     valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = [], [], []
     # TODO: Set your own pruning threshold
-    threshold = 20
+    threshold = 10
     # TODO: Do pruning (12 points)
-
+    for i in range(10000):
+        temp_point_X = template_sample_points_X[i]
+        temp_point_Y = template_sample_points_Y[i]
+        start_distance = distance(gesture_points_X[0], gesture_points_Y[0], temp_point_X[0], temp_point_Y[0])
+        end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], temp_point_X[-1], temp_point_Y[-1])
+        if start_distance <= threshold and end_distance <= threshold:
+            valid_words.append(words[i])
+            valid_template_sample_points_X.append(temp_point_X)
+            valid_template_sample_points_Y.append(temp_point_Y)
+    print("VALID WORDS LEN", len(valid_words))
+    print("VALID WORDS", valid_words)
     return valid_words, valid_template_sample_points_X, valid_template_sample_points_Y
 
 
@@ -230,12 +245,14 @@ def shark2():
     for i in range(len(data)):
         gesture_points_X.append(data[i]['x'])
         gesture_points_Y.append(data[i]['y'])
-    gesture_points_X = [gesture_points_X]
-    gesture_points_Y = [gesture_points_Y]
+    # gesture_points_X = [gesture_points_X]
+    # gesture_points_Y = [gesture_points_Y]
 
     gesture_sample_points_X, gesture_sample_points_Y = generate_sample_points(gesture_points_X, gesture_points_Y)
+    norm_gesture_sample_points_X, norm_gesture_sample_points_Y = normalize(gesture_sample_points_X, gesture_sample_points_Y)
 
-    valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, template_sample_points_Y)
+    valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = do_pruning(norm_gesture_sample_points_X,
+                    norm_gesture_sample_points_Y, template_sample_points_X, template_sample_points_Y)
 
     shape_scores = get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
 
