@@ -39,7 +39,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -107,25 +107,33 @@
     </option>
   </component>
   <component name="WindowStateProjectService">
-    <state width="1199" height="230" key="GridCell.Tab.0.bottom" timestamp="1584655851812">
+    <state width="1457" height="230" key="GridCell.Tab.0.bottom" timestamp="1585039316520">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1199" height="230" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1584655851812" />
-    <state width="1199" height="230" key="GridCell.Tab.0.center" timestamp="1584655851811">
+    <state width="1457" height="230" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1585039316520" />
+    <state width="1457" height="230" key="GridCell.Tab.0.center" timestamp="1585039316519">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1199" height="230" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1584655851811" />
-    <state width="1199" height="230" key="GridCell.Tab.0.left" timestamp="1584655851811">
+    <state width="1457" height="230" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1585039316519" />
+    <state width="1457" height="230" key="GridCell.Tab.0.left" timestamp="1585039316519">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1199" height="230" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1584655851811" />
-    <state width="1199" height="230" key="GridCell.Tab.0.right" timestamp="1584655851812">
+    <state width="1457" height="230" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1585039316519" />
+    <state width="1457" height="230" key="GridCell.Tab.0.right" timestamp="1585039316520">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state width="1199" height="230" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1584655851812" />
-    <state x="116" y="100" key="SettingsEditor" timestamp="1584641843263">
+    <state width="1457" height="230" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1585039316520" />
+    <state x="872" y="179" key="RollbackChangesDialog" timestamp="1585007650648">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="116" y="100" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1584641843263" />
+    <state x="872" y="179" key="RollbackChangesDialog/0.23.1440.877@0.23.1440.877" timestamp="1585007650648" />
+    <state x="116" y="100" key="SettingsEditor" timestamp="1584681568986">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="116" y="100" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1584681568986" />
+    <state x="489" y="213" width="670" height="676" key="search.everywhere.popup" timestamp="1585037584244">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="489" y="213" width="670" height="676" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1585037584244" />
   </component>
 </project>
