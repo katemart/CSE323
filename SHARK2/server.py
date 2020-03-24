@@ -85,18 +85,19 @@ def generate_sample_points(points_X, points_Y):
 template_sample_points_X, template_sample_points_Y = [], []
 for i in range(10000):
     X, Y = generate_sample_points(template_points_X[i], template_points_Y[i])
+    # X, Y = normalize(X, Y)
     template_sample_points_X.append(X)
     template_sample_points_Y.append(Y)
 
 
-# helper function to calculate distance between two points
+# function to calculate distance between two points
 def distance(x1, y1, x2, y2):
     return (((x2 - x1) ** 2) + ((y2 - y1) ** 2)) ** 0.5
 
 
-# helper function to normalize points
+# function to normalize points
 def normalize(sample_points_X, sample_points_Y, L=50):
-    # get s value for every template gesture
+    # get s value for every point
     width = max(sample_points_X) - min(sample_points_X)
     height = max(sample_points_Y) - min(sample_points_Y)
     if width == 0 and height == 0:
@@ -107,10 +108,9 @@ def normalize(sample_points_X, sample_points_Y, L=50):
     scaled_points = list(s * elem for elem in sample_points_X), list(s * elem for elem in sample_points_Y)
     # translate the points
     x_centroid, y_centroid = np.mean(scaled_points[0]), np.mean(scaled_points[1])
-    fx, fy = (0 - x_centroid), (0 - y_centroid)
-    px, py = np.reshape(fx, (-1, 1)), np.reshape(fy, (-1, 1))
-    normalized_points = px + py + scaled_points
-    return normalized_points
+    px, py = np.reshape((0 - x_centroid), (-1, 1)), np.reshape((0 - y_centroid), (-1, 1))
+    norm_points = px + py + scaled_points
+    return norm_points
 
 
 def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, template_sample_points_Y):
@@ -138,16 +138,9 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
     '''
     valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = [], [], []
     # TODO: Set your own pruning threshold
-    threshold = 10
+    threshold = 20
     # TODO: Do pruning (12 points)
-    L = 50
-    # normalize gesture points
-    #gesture_points_X, gesture_points_Y = normalize(gesture_points_X, gesture_points_Y, L)
     # get distance between each gesture and template point
-    for i in range(len(valid_template_sample_points_X)):
-        # normalize template points
-        valid_template_sample_points_X[i], valid_template_sample_points_Y[i] = normalize(valid_template_sample_points_X[i],
-                                                                                         valid_template_sample_points_Y[i], L)
     for i in range(10000):
         temp_point_X = template_sample_points_X[i]
         temp_point_Y = template_sample_points_Y[i]
@@ -162,8 +155,7 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
     return valid_words, valid_template_sample_points_X, valid_template_sample_points_Y
 
 
-def get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X,
-                     valid_template_sample_points_Y):
+def get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y):
     '''Get the shape score for every valid word after pruning.
 
     In this function, we should compare the sampled input gesture (containing 100 points) with every single valid
@@ -191,8 +183,7 @@ def get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_tem
     for i in range(len(valid_template_sample_points_X)):
         distances = 0
         # normalize template points
-        valid_template_sample_points_X[i], valid_template_sample_points_Y[i] = normalize(valid_template_sample_points_X[i],
-                                                                                         valid_template_sample_points_Y[i], L)
+        valid_template_sample_points_X[i], valid_template_sample_points_Y[i] = normalize(valid_template_sample_points_X[i], valid_template_sample_points_Y[i], L)
         # number of sample points is 100
         for j in range(100):
             dist = distance(valid_template_sample_points_X[i][j], valid_template_sample_points_Y[i][j],
@@ -212,8 +203,7 @@ for i in range(50):
     alpha[50 - i - 1], alpha[50 + i] = a, a
 
 
-def get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X,
-                        valid_template_sample_points_Y):
+def get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y):
     '''Get the location score for every valid word after pruning.
 
     In this function, we should compare the sampled user gesture (containing 100 points) with every single valid
@@ -257,7 +247,7 @@ def get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_
 def get_integration_scores(shape_scores, location_scores):
     integration_scores = []
     # TODO: Set your own shape weight
-    shape_coef = 0.7
+    shape_coef = 0.75
     # TODO: Set your own location weight
     location_coef = 1 - shape_coef
     for i in range(len(shape_scores)):
@@ -306,15 +296,14 @@ def shark2():
     # gesture_points_Y = [gesture_points_Y]
 
     gesture_sample_points_X, gesture_sample_points_Y = generate_sample_points(gesture_points_X, gesture_points_Y)
+    # do pruning
     valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = do_pruning(gesture_sample_points_X,
         gesture_sample_points_Y, template_sample_points_X, template_sample_points_Y)
 
     best_word = "NO WORD FOUND!"
     if len(valid_words) != 0:
-        shape_scores = get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y,
-                                        valid_template_sample_points_X, valid_template_sample_points_Y)
-        location_scores = get_location_scores(gesture_sample_points_X, gesture_sample_points_Y,
-                                              valid_template_sample_points_X, valid_template_sample_points_Y)
+        shape_scores = get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
+        location_scores = get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
         integration_scores = get_integration_scores(shape_scores, location_scores)
         best_word = get_best_word(valid_words, integration_scores)
     end_time = time.time()
