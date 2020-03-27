@@ -85,7 +85,6 @@ def generate_sample_points(points_X, points_Y):
 template_sample_points_X, template_sample_points_Y = [], []
 for i in range(10000):
     X, Y = generate_sample_points(template_points_X[i], template_points_Y[i])
-    # X, Y = normalize(X, Y)
     template_sample_points_X.append(X)
     template_sample_points_Y.append(Y)
 
@@ -142,15 +141,15 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
     # TODO: Do pruning (12 points)
     # get distance between each gesture and template point
     for i in range(10000):
+        # normalize template points (only done once)
         temp_point_X, temp_point_Y = normalize(template_sample_points_X[i], template_sample_points_Y[i])
+        # calculate distances
         start_distance = distance(gesture_points_X[0], gesture_points_Y[0], temp_point_X[0], temp_point_Y[0])
         end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], temp_point_X[-1], temp_point_Y[-1])
         if start_distance <= threshold and end_distance <= threshold:
             valid_words.append(words[i])
             valid_template_sample_points_X.append(temp_point_X)
             valid_template_sample_points_Y.append(temp_point_Y)
-    print("VALID WORDS LEN", len(valid_words))
-    print("VALID WORDS", valid_words)
     return valid_words, valid_template_sample_points_X, valid_template_sample_points_Y
 
 
@@ -259,16 +258,17 @@ def get_best_word(valid_words, integration_scores):
     :param integration_scores: A list of corresponding integration scores of valid_words.
     :return: The most probable word suggested to the user.
     '''
-    best_word = 'the'
     # TODO: Set your own range.
     n = 3
     # TODO: Get the best word (12 points)
+    # determine based word (using formula given in slides)
     final_scores = list(integration_scores[i] * (1 - probabilities[valid_words[i]]) for i in range(len(integration_scores)))
     sorted(final_scores)
     min_score = min(final_scores)
     w = list(valid_words[i] for i in range(len(final_scores)) if final_scores[i] == min_score)
     min_words = min(len(w), n)
     return ' '.join(w[:min_words])
+
 
 @app.route("/")
 def init():
@@ -279,11 +279,9 @@ def init():
 def shark2():
     start_time = time.time()
     data = json.loads(request.get_data())
-
     print(data)
 
-    gesture_points_X = []
-    gesture_points_Y = []
+    gesture_points_X, gesture_points_Y = [], []
     for i in range(len(data)):
         gesture_points_X.append(data[i]['x'])
         gesture_points_Y.append(data[i]['y'])
@@ -291,7 +289,7 @@ def shark2():
     # gesture_points_Y = [gesture_points_Y]
 
     gesture_sample_points_X, gesture_sample_points_Y = generate_sample_points(gesture_points_X, gesture_points_Y)
-    # normalize gesture points
+    # normalize gesture points (only done once; used in pruning and shape scores)
     norm_gesture_sample_points_X, norm_gesture_sample_points_Y = normalize(gesture_sample_points_X, gesture_sample_points_Y)
     # do pruning
     valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = do_pruning(norm_gesture_sample_points_X,
@@ -299,9 +297,13 @@ def shark2():
 
     best_word = "No best word"
     if len(valid_words) != 0:
+        # get shape scores with normalized gesture points and normalized template points
         shape_scores = get_shape_scores(norm_gesture_sample_points_X, norm_gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
+        # get location scores with un-normalized gesture points
         location_scores = get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
+        # get integration scores
         integration_scores = get_integration_scores(shape_scores, location_scores)
+        # get best word
         best_word = get_best_word(valid_words, integration_scores)
     end_time = time.time()
     return '{"best_word":"' + best_word + '", "elapsed_time":"' + str(round((end_time - start_time) * 1000, 5)) + 'ms"}'
