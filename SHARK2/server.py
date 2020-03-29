@@ -141,11 +141,12 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
     # TODO: Do pruning (12 points)
     # get distance between each gesture and template point
     for i in range(10000):
+        temp_point_X, temp_point_Y = template_sample_points_X[i], template_sample_points_Y[i]
         # normalize template points (only done once)
-        temp_point_X, temp_point_Y = normalize(template_sample_points_X[i], template_sample_points_Y[i])
+        norm_temp_point_X, norm_temp_point_Y = normalize(template_sample_points_X[i], template_sample_points_Y[i])
         # calculate distances
-        start_distance = distance(gesture_points_X[0], gesture_points_Y[0], temp_point_X[0], temp_point_Y[0])
-        end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], temp_point_X[-1], temp_point_Y[-1])
+        start_distance = distance(gesture_points_X[0], gesture_points_Y[0], norm_temp_point_X[0], norm_temp_point_Y[0])
+        end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], norm_temp_point_X[-1], norm_temp_point_Y[-1])
         if start_distance <= threshold and end_distance <= threshold:
             valid_words.append(words[i])
             valid_template_sample_points_X.append(temp_point_X)
@@ -178,6 +179,8 @@ def get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_tem
     # get distance between each gesture and template point
     for i in range(len(valid_template_sample_points_X)):
         distances = 0
+        # normalize points
+        valid_template_sample_points_X[i], valid_template_sample_points_Y[i] = normalize(valid_template_sample_points_X[i], valid_template_sample_points_Y[i], L)
         # number of sample points is 100
         for j in range(100):
             dist = distance(valid_template_sample_points_X[i][j], valid_template_sample_points_Y[i][j],
@@ -241,9 +244,9 @@ def get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_
 def get_integration_scores(shape_scores, location_scores):
     integration_scores = []
     # TODO: Set your own shape weight
-    shape_coef = 0.63
+    shape_coef = 0.7
     # TODO: Set your own location weight
-    location_coef = 0.37
+    location_coef = 1 - shape_coef
     for i in range(len(shape_scores)):
         integration_scores.append(shape_coef * shape_scores[i] + location_coef * location_scores[i])
     return integration_scores
@@ -285,8 +288,6 @@ def shark2():
     for i in range(len(data)):
         gesture_points_X.append(data[i]['x'])
         gesture_points_Y.append(data[i]['y'])
-    # gesture_points_X = [gesture_points_X]
-    # gesture_points_Y = [gesture_points_Y]
 
     gesture_sample_points_X, gesture_sample_points_Y = generate_sample_points(gesture_points_X, gesture_points_Y)
     # normalize gesture points (only done once; used in pruning and shape scores)
@@ -297,7 +298,7 @@ def shark2():
 
     best_word = "No best word"
     if len(valid_words) != 0:
-        # get shape scores with normalized gesture points and normalized template points
+        # get shape scores with normalized points
         shape_scores = get_shape_scores(norm_gesture_sample_points_X, norm_gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
         # get location scores with un-normalized gesture points
         location_scores = get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_template_sample_points_X, valid_template_sample_points_Y)
