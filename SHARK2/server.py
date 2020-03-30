@@ -49,10 +49,8 @@ def generate_sample_points(points_X, points_Y):
 
     In this function, we should convert every gesture or template to a set of 100 points, such that we can compare
     the input gesture and a template computationally.
-
     :param points_X: A list of X-axis values of a gesture.
     :param points_Y: A list of Y-axis values of a gesture.
-
     :return:
         sample_points_X: A list of X-axis values of a gesture after sampling, containing 100 elements.
         sample_points_Y: A list of Y-axis values of a gesture after sampling, containing 100 elements.
@@ -85,6 +83,7 @@ def generate_sample_points(points_X, points_Y):
 def distance(x1, y1, x2, y2):
     return (((x2 - x1) ** 2) + ((y2 - y1) ** 2)) ** 0.5
 
+
 # function to normalize points
 def normalize(sample_points_X, sample_points_Y, L=50):
     # get s value for every point
@@ -94,9 +93,8 @@ def normalize(sample_points_X, sample_points_Y, L=50):
         s = 0
     else:
         s = L / max(width, height)
-    # scale the points
+    # scale and translate the points
     scaled_points = list(s * elem for elem in sample_points_X), list(s * elem for elem in sample_points_Y)
-    # translate the points
     x_centroid, y_centroid = np.mean(scaled_points[0]), np.mean(scaled_points[1])
     px, py = np.reshape((0 - x_centroid), (-1, 1)), np.reshape((0 - y_centroid), (-1, 1))
     norm_points = px + py + scaled_points
@@ -108,7 +106,7 @@ template_sample_points_X, template_sample_points_Y = [], []
 norm_temp_sample_points_X, norm_temp_sample_points_Y = [], []
 for i in range(10000):
     X, Y = generate_sample_points(template_points_X[i], template_points_Y[i])
-    # cached normalized template points (to be used later)
+    # cache normalized template points (to be used later)
     norm_x, norm_y = normalize(X, Y)
     norm_temp_sample_points_X.append(norm_x)
     norm_temp_sample_points_Y.append(norm_y)
@@ -116,12 +114,12 @@ for i in range(10000):
     template_sample_points_Y.append(Y)
 
 
+valid_temp_sample_point_index = []
 def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, template_sample_points_Y):
     '''Do pruning on the dictionary of 10000 words.
 
     In this function, we use the pruning method described in the paper (or any other method you consider it reasonable)
     to narrow down the number of valid words so that the ambiguity can be avoided to some extent.
-
     :param gesture_points_X: A list of X-axis values of input gesture points, which has 100 values since we have
         sampled 100 points.
     :param gesture_points_Y: A list of Y-axis values of input gesture points, which has 100 values since we have
@@ -130,7 +128,6 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
         Each of the elements is a 1D list and has the length of 100.
     :param template_sample_points_Y: 2D list, containing Y-axis values of every template (10000 templates in total).
         Each of the elements is a 1D list and has the length of 100.
-
     :return:
         valid_words: A list of valid words after pruning.
         valid_probabilities: The corresponding probabilities of valid_words.
@@ -140,16 +137,18 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
             is a 1D list and has the length of 100.
     '''
     valid_words, valid_template_sample_points_X, valid_template_sample_points_Y = [], [], []
+    global valid_temp_sample_point_index
+    valid_temp_sample_point_index = []
     # TODO: Set your own pruning threshold
     threshold = 15
     # TODO: Do pruning (12 points)
     # get distance between each gesture and template point
     for i in range(10000):
-        # calculate distances
         start_distance = distance(gesture_points_X[0], gesture_points_Y[0], norm_temp_sample_points_X[i][0], norm_temp_sample_points_Y[i][0])
         end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], norm_temp_sample_points_X[i][-1], norm_temp_sample_points_Y[i][-1])
         if start_distance <= threshold and end_distance <= threshold:
             valid_words.append(words[i])
+            valid_temp_sample_point_index.append(i)
             valid_template_sample_points_X.append(template_sample_points_X[i])
             valid_template_sample_points_Y.append(template_sample_points_Y[i])
     return valid_words, valid_template_sample_points_X, valid_template_sample_points_Y
@@ -160,7 +159,6 @@ def get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_tem
 
     In this function, we should compare the sampled input gesture (containing 100 points) with every single valid
     template (containing 100 points) and give each of them a shape score.
-
     :param gesture_sample_points_X: A list of X-axis values of input gesture points, which has 100 values since we
         have sampled 100 points.
     :param gesture_sample_points_Y: A list of Y-axis values of input gesture points, which has 100 values since we
@@ -169,19 +167,20 @@ def get_shape_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_tem
         elements is a 1D list and has the length of 100.
     :param valid_template_sample_points_Y: 2D list, containing Y-axis values of every valid template. Each of the
         elements is a 1D list and has the length of 100.
-
     :return:
         A list of shape scores.
     '''
     shape_scores = []
     # TODO: Set your own L
-    L = 50
+    # normalized points are passed in as indices (for efficiency purposes)
+    L = 50  # defined as default value in normalize function to improve performance (so not needed here)
     # TODO: Calculate shape scores (12 points)
     # get distance between each gesture and template point
+    global valid_temp_sample_point_index
     for i in range(len(valid_template_sample_points_X)):
         distances = 0
-        # normalize points
-        valid_template_sample_points_X[i], valid_template_sample_points_Y[i] = normalize(valid_template_sample_points_X[i], valid_template_sample_points_Y[i], L)
+        index = valid_temp_sample_point_index[i]
+        valid_template_sample_points_X[i], valid_template_sample_points_Y[i] = norm_temp_sample_points_X[index], norm_temp_sample_points_Y[index]
         # number of sample points is 100
         for j in range(100):
             dist = distance(valid_template_sample_points_X[i][j], valid_template_sample_points_Y[i][j],
@@ -206,7 +205,6 @@ def get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_
 
     In this function, we should compare the sampled user gesture (containing 100 points) with every single valid
     template (containing 100 points) and give each of them a location score.
-
     :param gesture_sample_points_X: A list of X-axis values of input gesture points, which has 100 values since we
         have sampled 100 points.
     :param gesture_sample_points_Y: A list of Y-axis values of input gesture points, which has 100 values since we
@@ -215,11 +213,9 @@ def get_location_scores(gesture_sample_points_X, gesture_sample_points_Y, valid_
         elements is a 1D list and has the length of 100.
     :param template_sample_points_Y: 2D list, containing Y-axis values of every valid template. Each of the
         elements is a 1D list and has the length of 100.
-
     :return:
         A list of location scores.
     '''
-    location_scores = []
     radius = 15
     # TODO: Calculate location scores (12 points)
     # initialize location_scores and gesture_sample_points
@@ -255,6 +251,7 @@ def get_integration_scores(shape_scores, location_scores):
 
 def get_best_word(valid_words, integration_scores):
     '''Get the best word.
+
     In this function, you should select top-n words with the highest integration scores and then use their corresponding
     probability (stored in variable "probabilities") as weight. The word with the highest weighted integration score is
     exactly the word we want.
@@ -283,6 +280,7 @@ def init():
 def shark2():
     start_time = time.time()
     data = json.loads(request.get_data())
+    
     print(data)
 
     gesture_points_X, gesture_points_Y = [], []
