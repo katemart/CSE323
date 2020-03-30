@@ -81,18 +81,9 @@ def generate_sample_points(points_X, points_Y):
     return sample_points_X, sample_points_Y
 
 
-# Pre-sample every template
-template_sample_points_X, template_sample_points_Y = [], []
-for i in range(10000):
-    X, Y = generate_sample_points(template_points_X[i], template_points_Y[i])
-    template_sample_points_X.append(X)
-    template_sample_points_Y.append(Y)
-
-
 # function to calculate distance between two points
 def distance(x1, y1, x2, y2):
     return (((x2 - x1) ** 2) + ((y2 - y1) ** 2)) ** 0.5
-
 
 # function to normalize points
 def normalize(sample_points_X, sample_points_Y, L=50):
@@ -110,6 +101,19 @@ def normalize(sample_points_X, sample_points_Y, L=50):
     px, py = np.reshape((0 - x_centroid), (-1, 1)), np.reshape((0 - y_centroid), (-1, 1))
     norm_points = px + py + scaled_points
     return norm_points
+
+
+# Pre-sample every template (and normalize temp sample points at the same time)
+template_sample_points_X, template_sample_points_Y = [], []
+norm_temp_sample_points_X, norm_temp_sample_points_Y = [], []
+for i in range(10000):
+    X, Y = generate_sample_points(template_points_X[i], template_points_Y[i])
+    # cached normalized template points (to be used later)
+    norm_x, norm_y = normalize(X, Y)
+    norm_temp_sample_points_X.append(norm_x)
+    norm_temp_sample_points_Y.append(norm_y)
+    template_sample_points_X.append(X)
+    template_sample_points_Y.append(Y)
 
 
 def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, template_sample_points_Y):
@@ -141,16 +145,13 @@ def do_pruning(gesture_points_X, gesture_points_Y, template_sample_points_X, tem
     # TODO: Do pruning (12 points)
     # get distance between each gesture and template point
     for i in range(10000):
-        temp_point_X, temp_point_Y = template_sample_points_X[i], template_sample_points_Y[i]
-        # normalize template points (only done once)
-        norm_temp_point_X, norm_temp_point_Y = normalize(template_sample_points_X[i], template_sample_points_Y[i])
         # calculate distances
-        start_distance = distance(gesture_points_X[0], gesture_points_Y[0], norm_temp_point_X[0], norm_temp_point_Y[0])
-        end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], norm_temp_point_X[-1], norm_temp_point_Y[-1])
+        start_distance = distance(gesture_points_X[0], gesture_points_Y[0], norm_temp_sample_points_X[i][0], norm_temp_sample_points_Y[i][0])
+        end_distance = distance(gesture_points_X[-1], gesture_points_Y[-1], norm_temp_sample_points_X[i][-1], norm_temp_sample_points_Y[i][-1])
         if start_distance <= threshold and end_distance <= threshold:
             valid_words.append(words[i])
-            valid_template_sample_points_X.append(temp_point_X)
-            valid_template_sample_points_Y.append(temp_point_Y)
+            valid_template_sample_points_X.append(template_sample_points_X[i])
+            valid_template_sample_points_Y.append(template_sample_points_Y[i])
     return valid_words, valid_template_sample_points_X, valid_template_sample_points_Y
 
 
